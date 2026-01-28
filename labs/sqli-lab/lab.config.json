@@ -1,0 +1,16 @@
+{
+  "lab_id": "sqli-basic",
+  "name": "SQL Injection - Login Bypass",
+  "difficulty": "Easy",
+  "type": "SQL Injection",
+  "port": 8080,
+  "vulnerability": "Unsanitized SQL query with string concatenation",
+  "objectives": [
+    "Bypass authentication",
+    "Understand SQL query manipulation"
+  ],
+  "payloads": [
+    "' OR '1'='1",
+    "' OR 1=1 -- "
+  ]
+}
