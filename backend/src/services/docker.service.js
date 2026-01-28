@@ -10,8 +10,7 @@ export function startSqlLab() {
 
     const network = isProd ? "lab_net" : "bridge";
 
-    const cmd = `
-      docker run -d \
+    const cmd = `docker run -d \
       --name ${containerName} \
       -p 127.0.0.1:${port}:80 \
       --network ${network} \
@@ -21,13 +20,28 @@ export function startSqlLab() {
       sqli-lab
     `;
 
-    exec(cmd, (err) => {
-      if (err) return reject(err);
+    exec(cmd, (err, stdout, stderr) => {
+  console.log("DOCKER CMD:", cmd);
+  console.log("DOCKER STDOUT:", stdout);
+  console.log("DOCKER STDERR:", stderr);
 
-      resolve({
-        containerName,
-        url: `http://localhost:${port}`
-      });
+  if (err) {
+    return reject(new Error(stderr || err.message));
+  }
+
+  resolve({
+    containerName,
+    url: `http://localhost:${port}`
+  });
+});
+
+  });
+}
+export function stopLab(containerName) {
+  return new Promise((resolve, reject) => {
+    exec(`docker rm -f ${containerName}`, (err) => {
+      if (err) return reject(err);
+      resolve();
     });
   });
 }
