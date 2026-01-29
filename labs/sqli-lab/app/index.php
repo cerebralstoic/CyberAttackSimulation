@@ -4,6 +4,7 @@ $db = new SQLite3("users.db");
 $mode = $_POST["mode"] ?? "vulnerable";
 $username = $_POST["username"] ?? "";
 $password = $_POST["password"] ?? "";
+$explanation = "";
 $difficulty = $_POST["difficulty"] ?? "easy";
 
 $message = "";
@@ -16,6 +17,33 @@ $db->exec("CREATE TABLE IF NOT EXISTS stats (
     successes INTEGER
 )");
 $db->exec("INSERT OR IGNORE INTO stats VALUES (1,0,0)");
+function explainPayload($username, $password, $difficulty, $mode) {
+    $input = strtolower($username . " " . $password);
+
+    if ($mode === "secure") {
+        return "Prepared statements are used. User input is treated as data, not SQL code, so injection is blocked.";
+    }
+
+    if (strpos($input, " or ") !== false || strpos($input, "1=1") !== false) {
+        if ($difficulty === "hard") {
+            return "Boolean-based SQL injection was attempted, but input was escaped, preventing query manipulation.";
+        }
+        return "Boolean-based SQL injection detected. The injected condition forces the WHERE clause to always evaluate TRUE.";
+    }
+
+    if (strpos($input, "--") !== false) {
+        if ($difficulty === "medium" || $difficulty === "hard") {
+            return "Comment-based SQL injection was attempted, but comment tokens are filtered in this difficulty level.";
+        }
+        return "Comment-based SQL injection detected. The rest of the SQL query is commented out, bypassing authentication.";
+    }
+
+    if (strpos($input, "'") !== false) {
+        return "Quote-based SQL injection attempt detected. The attacker tried to break out of the string context.";
+    }
+
+    return "No SQL injection pattern detected. Authentication failed due to invalid credentials.";
+}
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $db->exec("UPDATE stats SET attempts = attempts + 1 WHERE id=1");
@@ -62,6 +90,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
     }
 }
+$explanation = explainPayload($username, $password, $difficulty, $mode);
+
 
 $stats = $db->querySingle("SELECT attempts || ',' || successes FROM stats");
 [$attempts, $successes] = explode(",", $stats);
@@ -187,6 +217,14 @@ button:hover { background:#1d4ed8 }
 <div class="box">
 <strong>Executed SQL:</strong><br>
 <?= htmlspecialchars($queryUsed) ?>
+</div>
+
+<?php endif; ?>
+
+<?php if ($explanation): ?>
+<div class="box">
+<strong>Payload Analysis:</strong><br>
+<?= htmlspecialchars($explanation) ?>
 </div>
 <?php endif; ?>
 
