@@ -4,6 +4,7 @@ $db = new SQLite3("users.db");
 $mode = $_POST["mode"] ?? "vulnerable";
 $username = $_POST["username"] ?? "";
 $password = $_POST["password"] ?? "";
+$difficulty = $_POST["difficulty"] ?? "easy";
 
 $message = "";
 $queryUsed = "";
@@ -20,28 +21,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $db->exec("UPDATE stats SET attempts = attempts + 1 WHERE id=1");
 
     if ($mode === "vulnerable") {
-       
-        $queryUsed = "SELECT * FROM users WHERE username='$username' AND password='$password'";
-        $result = $db->query($queryUsed);
+
+        if ($difficulty === "hard") {
+            $username = SQLite3::escapeString($username);
+            $password = SQLite3::escapeString($password);
+        }
+
+        if ($difficulty === "medium") {
+            $username = str_replace(["--", ";"], "", $username);
+            $password = str_replace(["--", ";"], "", $password);
+        }
+
+        $queryUsed =
+            "SELECT * FROM users WHERE " .
+            "username = '$username' AND password = '$password'";
+
+        $result = @$db->query($queryUsed);
 
         if ($result && $result->fetchArray()) {
-            $message = " Login successful (SQLi possible)";
-            $status = "success";
+            $message = "Login successful";
+            $status = ($difficulty === "easy") ? "success" : "vulnerable";
             $db->exec("UPDATE stats SET successes = successes + 1 WHERE id=1");
         } else {
-            $message = " Invalid credentials";
+            $message = "Invalid credentials";
         }
+
     } else {
+
         $stmt = $db->prepare("SELECT * FROM users WHERE username = :u AND password = :p");
         $stmt->bindValue(":u", $username, SQLITE3_TEXT);
         $stmt->bindValue(":p", $password, SQLITE3_TEXT);
         $result = $stmt->execute();
 
         if ($result && $result->fetchArray()) {
-            $message = " Login successful (secure mode)";
+            $message = "Login successful (secure mode)";
             $status = "secure";
         } else {
-            $message = " Injection blocked (prepared statements)";
+            $message = "Injection blocked (prepared statements)";
             $status = "secure";
         }
     }
@@ -140,6 +156,13 @@ button:hover { background:#1d4ed8 }
 <select name="mode">
 <option value="vulnerable" <?= $mode==="vulnerable"?"selected":"" ?>>Vulnerable</option>
 <option value="secure" <?= $mode==="secure"?"selected":"" ?>>Secure</option>
+</select>
+
+<label>Difficulty</label>
+<select name="difficulty">
+<option value="easy" <?= $difficulty==="easy"?"selected":"" ?>>Easy</option>
+<option value="medium" <?= $difficulty==="medium"?"selected":"" ?>>Medium</option>
+<option value="hard" <?= $difficulty==="hard"?"selected":"" ?>>Hard</option>
 </select>
 
 <label>Username</label>
