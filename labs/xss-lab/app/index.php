@@ -126,10 +126,12 @@ button:hover { background:#1d4ed8 }
 <div class="container">
 <h1>🧨 XSS Lab</h1>
 <div class="box">
-  <a href="/dom.html?q=<img src=x onerror=alert(1)>" style="color:#60a5fa">
-    ➜ Go to DOM XSS Lab
-  </a>
+  <strong>XSS Labs:</strong><br>
+  <a href="/" style="color:#60a5fa">Reflected XSS</a> |
+  <a href="/dom.html?q=<img src=x onerror=alert(1)>" style="color:#60a5fa">DOM XSS</a> |
+  <a href="/stored.php" style="color:#60a5fa">Stored XSS</a>
 </div>
+
 
 
 <div class="status-ball <?= $status ?>"></div>
