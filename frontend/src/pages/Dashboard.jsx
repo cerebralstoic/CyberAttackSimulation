@@ -74,10 +74,10 @@ export function Dashboard({ onLabSelect }) {
 
   return (
     <div className="max-w-7xl">
-      {/* Header */}
+    
       <div className="mb-8">
         <h1 className="text-3xl font-semibold mb-3">
-          Welcome to Cyber Range
+          Welcome to Cyber Attack Simulation
         </h1>
         <p className="text-gray-400 max-w-2xl">
           A professional security training platform for hands-on practice with
