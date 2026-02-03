@@ -1,11 +1,10 @@
-import { startSqlLab } from "../services/docker.service.js";
-import { startXssLab } from "../services/docker.service.js";
-import { startCmdiLab } from "../services/docker.service.js";
+import { startSqlLab, startCmdiLab, startXssLab, startUploadLab } from "../services/docker.service.js";
 
 const LAB_STARTERS = {
   sqli: startSqlLab,
   xss: startXssLab,
   cmdi: startCmdiLab,
+  uploadfile : startUploadLab,
 };
 
 export async function startLab(req, res) {
