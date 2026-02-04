@@ -1,31 +1,46 @@
-import { startSqlLab, startCmdiLab, startXssLab, startUploadLab } from "../services/docker.service.js";
+import {
+  startSqlLab,
+  startCmdiLab,
+  startXssLab,
+  startUploadLab,
+} from "../services/docker.service.js";
+
+import { getLab } from "../registry/getLab.js";
+import { scheduleTTL } from "../services/ttl.service.js";
 
 const LAB_STARTERS = {
-  sqli: startSqlLab,
-  xss: startXssLab,
-  cmdi: startCmdiLab,
-  uploadfile : startUploadLab,
+  startSqlLab,
+  startXssLab,
+  startCmdiLab,
+  startUploadLab,
 };
 
 export async function startLab(req, res) {
-  const { type } = req.body;
-
-  if (!type || !LAB_STARTERS[type]) {
-    return res.status(400).json({
-      error: "Invalid lab type",
-      allowed: Object.keys(LAB_STARTERS)
-    });
-  }
-
   try {
-    const lab = await LAB_STARTERS[type]();
+    const { type } = req.body;
+
+    const lab = getLab(type);
+
+    const starterFn = LAB_STARTERS[lab.starter];
+    if (!starterFn) {
+      return res.status(500).json({
+        error: "Lab starter not implemented",
+      });
+    }
+
+    const instance = await starterFn();
+
+    scheduleTTL(instance.containerName, lab.ttl);
+
     res.json({
-      type,
-      ...lab
+      type: lab.id,
+      name: lab.name,
+      ttl: lab.ttl,
+      ...instance,
     });
   } catch (err) {
-    res.status(500).json({
-      error: err.message
+    res.status(400).json({
+      error: err.message,
     });
   }
 }
