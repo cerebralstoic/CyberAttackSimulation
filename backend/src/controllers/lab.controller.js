@@ -4,7 +4,8 @@ import {
   startXssLab,
   startUploadLab,
 } from "../services/docker.service.js";
-
+import { stopLab } from "../services/docker.service.js";
+import { cancelTTL } from "../services/ttl.service.js";
 import { getLab } from "../registry/getLab.js";
 import { scheduleTTL } from "../services/ttl.service.js";
 
@@ -41,5 +42,29 @@ export async function startLab(req, res) {
   } catch (err) {
     console.error("START LAB ERROR:", err.message);
     res.status(400).json({ error: err.message });
+  }
+}
+
+
+
+export async function stopLabController(req, res) {
+  try {
+    const { containerName } = req.body;
+
+    if (!containerName) {
+      return res.status(400).json({ error: "containerName required" });
+    }
+
+    cancelTTL(containerName);
+    await stopLab(containerName);
+
+    res.json({
+      containerName,
+      status: "stopped",
+    });
+  } catch (err) {
+    res.status(500).json({
+      error: err.message,
+    });
   }
 }
