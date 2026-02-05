@@ -14,7 +14,7 @@ const LAB_REGISTRY = {
     id: "xss",
     name: "Cross-Site Scripting",
     starter: "startXssLab",
-    ttl: 15,
+    ttl: 10,
     image: "xss-lab",
     category: "client-side",
     difficulties: ["easy", "medium", "hard", "secure"],

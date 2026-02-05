@@ -23,24 +23,23 @@ export async function startLab(req, res) {
 
     const starterFn = LAB_STARTERS[lab.starter];
     if (!starterFn) {
-      return res.status(500).json({
-        error: "Lab starter not implemented",
-      });
+      throw new Error("Lab starter not implemented");
     }
 
     const instance = await starterFn();
 
+
     scheduleTTL(instance.containerName, lab.ttl);
 
     res.json({
-      type: lab.id,
-      name: lab.name,
+      lab: lab.id,
+      containerName: instance.containerName,
+      url: instance.url,
       ttl: lab.ttl,
-      ...instance,
+      status: "running",
     });
   } catch (err) {
-    res.status(400).json({
-      error: err.message,
-    });
+    console.error("START LAB ERROR:", err.message);
+    res.status(400).json({ error: err.message });
   }
 }
