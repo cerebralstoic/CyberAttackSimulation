@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { startLab, stopLab } from "../api/labs";
 
 const LAB_TYPE_MAP = {
@@ -10,16 +10,44 @@ const LAB_TYPE_MAP = {
 
 export default function LabInterface({ lab, onBack }) {
   const [instance, setInstance] = useState(null);
+  const [remaining, setRemaining] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+
+
+  useEffect(() => {
+    const saved = localStorage.getItem("runningLab");
+    if (!saved) return;
+
+    const parsed = JSON.parse(saved);
+    const elapsed = Math.floor((Date.now() - parsed.startedAt) / 1000);
+    const total = parsed.ttl * 60;
+    const remainingSec = total - elapsed;
+
+    if (remainingSec > 0) {
+      setInstance(parsed);
+      setRemaining(remainingSec);
+    } else {
+      localStorage.removeItem("runningLab");
+    }
+  }, []);
 
   async function handleStart() {
     try {
       setLoading(true);
       setError(null);
+
       const type = LAB_TYPE_MAP[lab.category];
       const res = await startLab(type);
-      setInstance(res);
+
+      const persisted = {
+        ...res,
+        startedAt: Date.now(),
+      };
+
+      localStorage.setItem("runningLab", JSON.stringify(persisted));
+      setInstance(persisted);
+      setRemaining(res.ttl * 60);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -31,12 +59,38 @@ export default function LabInterface({ lab, onBack }) {
     try {
       setLoading(true);
       await stopLab(instance.containerName);
+      localStorage.removeItem("runningLab");
       setInstance(null);
+      setRemaining(null);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    if (remaining === null) return;
+
+    const timer = setInterval(() => {
+      setRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          localStorage.removeItem("runningLab");
+          setInstance(null);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [remaining]);
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
   return (
@@ -63,11 +117,16 @@ export default function LabInterface({ lab, onBack }) {
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="text-green-400">Status: Running</div>
+          <div className="text-green-400 font-medium">Status: Running</div>
+
+          <div className="text-yellow-400">
+            Time Remaining: {formatTime(remaining)}
+          </div>
 
           <a
             href={instance.url}
             target="_blank"
+            rel="noreferrer"
             className="text-blue-400 underline"
           >
             Open Lab
