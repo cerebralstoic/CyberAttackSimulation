@@ -14,13 +14,39 @@ export default function LabInterface({ lab, onBack }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+
+  useEffect(() => {
+    const saved = localStorage.getItem("runningLab");
+    if (!saved) return;
+
+    const parsed = JSON.parse(saved);
+    const elapsed = Math.floor((Date.now() - parsed.startedAt) / 1000);
+    const total = parsed.ttl * 60;
+    const remainingSec = total - elapsed;
+
+    if (remainingSec > 0) {
+      setInstance(parsed);
+      setRemaining(remainingSec);
+    } else {
+      localStorage.removeItem("runningLab");
+    }
+  }, []);
+
   async function handleStart() {
     try {
       setLoading(true);
       setError(null);
+
       const type = LAB_TYPE_MAP[lab.category];
       const res = await startLab(type);
-      setInstance(res);
+
+      const persisted = {
+        ...res,
+        startedAt: Date.now(),
+      };
+
+      localStorage.setItem("runningLab", JSON.stringify(persisted));
+      setInstance(persisted);
       setRemaining(res.ttl * 60);
     } catch (e) {
       setError(e.message);
@@ -33,6 +59,7 @@ export default function LabInterface({ lab, onBack }) {
     try {
       setLoading(true);
       await stopLab(instance.containerName);
+      localStorage.removeItem("runningLab");
       setInstance(null);
       setRemaining(null);
     } catch (e) {
@@ -43,12 +70,13 @@ export default function LabInterface({ lab, onBack }) {
   }
 
   useEffect(() => {
-    if (!remaining) return;
+    if (remaining === null) return;
 
     const timer = setInterval(() => {
       setRemaining((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          localStorage.removeItem("runningLab");
           setInstance(null);
           return null;
         }
@@ -98,6 +126,7 @@ export default function LabInterface({ lab, onBack }) {
           <a
             href={instance.url}
             target="_blank"
+            rel="noreferrer"
             className="text-blue-400 underline"
           >
             Open Lab
