@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { startLab, stopLab } from "../api/labs";
 
 const LAB_TYPE_MAP = {
@@ -10,6 +10,7 @@ const LAB_TYPE_MAP = {
 
 export default function LabInterface({ lab, onBack }) {
   const [instance, setInstance] = useState(null);
+  const [remaining, setRemaining] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -20,6 +21,7 @@ export default function LabInterface({ lab, onBack }) {
       const type = LAB_TYPE_MAP[lab.category];
       const res = await startLab(type);
       setInstance(res);
+      setRemaining(res.ttl * 60);
     } catch (e) {
       setError(e.message);
     } finally {
@@ -32,11 +34,35 @@ export default function LabInterface({ lab, onBack }) {
       setLoading(true);
       await stopLab(instance.containerName);
       setInstance(null);
+      setRemaining(null);
     } catch (e) {
       setError(e.message);
     } finally {
       setLoading(false);
     }
+  }
+
+  useEffect(() => {
+    if (!remaining) return;
+
+    const timer = setInterval(() => {
+      setRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          setInstance(null);
+          return null;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [remaining]);
+
+  function formatTime(sec) {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s.toString().padStart(2, "0")}`;
   }
 
   return (
@@ -63,7 +89,11 @@ export default function LabInterface({ lab, onBack }) {
         </button>
       ) : (
         <div className="space-y-4">
-          <div className="text-green-400">Status: Running</div>
+          <div className="text-green-400 font-medium">Status: Running</div>
+
+          <div className="text-yellow-400">
+            Time Remaining: {formatTime(remaining)}
+          </div>
 
           <a
             href={instance.url}
