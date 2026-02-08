@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
-import { auth } from "./firebase/firebase";
+import { listenToAuthChanges, login, loginWithGoogle, signup, resetPassword } from "./services/auth.service";
 
 import Navbar from "./components/Navbar.jsx";
 import { Sidebar } from "./components/Sidebar.jsx";
@@ -20,7 +19,7 @@ function App() {
   const [selectedLab, setSelectedLab] = useState(null);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (u) => {
+    const unsub = listenToAuthChanges((u) => {
       setUser(u);
       setAuthLoading(false);
     });
@@ -37,15 +36,28 @@ function App() {
 
   if (!user) {
     if (authPage === "signup") {
-      return <SignupPage onNavigateToLogin={() => setAuthPage("login")} />;
+      return (
+        <SignupPage
+          onSignup={(name, email, password) => signup(email, password, name)}
+          onGoogleSignup={loginWithGoogle}
+          onNavigateToLogin={() => setAuthPage("login")}
+        />
+      );
     }
 
     if (authPage === "forgot") {
-      return <ForgotPasswordPage onNavigateToLogin={() => setAuthPage("login")} />;
+      return (
+        <ForgotPasswordPage
+          onForgotPassword={resetPassword}
+          onNavigateToLogin={() => setAuthPage("login")}
+        />
+      );
     }
 
     return (
       <LoginPage
+        onLogin={login}
+        onGoogleLogin={loginWithGoogle}
         onNavigateToSignup={() => setAuthPage("signup")}
         onNavigateToForgotPassword={() => setAuthPage("forgot")}
       />
