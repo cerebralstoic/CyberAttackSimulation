@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Shield, Mail, Lock, AlertCircle, Eye, EyeOff } from "lucide-react";
-import { login } from "../services/auth.service";
-import { loginWithGoogle } from "../services/auth.service";
-import { useNavigate } from "react-router-dom";
 
-export default function LoginPage() {
-  const navigate = useNavigate();
-
+export default function LoginPage({
+  onLogin,
+  onGoogleLogin,
+  onNavigateToSignup,
+  onNavigateToForgotPassword,
+}) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -14,26 +14,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
+  const validateEmail = (email) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const validateForm = () => {
     const newErrors = {};
-
-    if (!email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!validateEmail(email)) {
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!validateEmail(email))
       newErrors.email = "Please enter a valid email address";
-    }
-
-    if (!password) {
-      newErrors.password = "Password is required";
-    } else if (password.length < 6) {
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 6)
       newErrors.password = "Password must be at least 6 characters";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -41,17 +32,14 @@ export default function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrors({});
-
     if (!validateForm()) return;
-
     try {
       setIsLoading(true);
-      await login(email, password);
-      navigate("/");
-    } catch (error) {
+      await onLogin(email, password);
+    } catch (e) {
       setErrors({
         general:
-          error.message ||
+          e.message ||
           "Invalid email or password. Please try again.",
       });
     } finally {
@@ -59,17 +47,15 @@ export default function LoginPage() {
     }
   };
 
-  const handleGoogleLogin = async () => {
+  const handleGoogle = async () => {
     setErrors({});
     setIsGoogleLoading(true);
-
     try {
-      await loginWithGoogle();
-      navigate("/");
-    } catch (error) {
+      await onGoogleLogin();
+    } catch (e) {
       setErrors({
         general:
-          error.message ||
+          e.message ||
           "Google sign-in failed. Please try again.",
       });
     } finally {
@@ -83,7 +69,9 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-3 mb-4">
             <Shield className="size-10 text-blue-500" />
-            <h1 className="text-3xl font-semibold text-white">Cyber Range</h1>
+            <h1 className="text-3xl font-semibold text-white">
+              Cyber Range
+            </h1>
           </div>
           <p className="text-gray-400">
             Sign in to continue your security training
@@ -92,16 +80,18 @@ export default function LoginPage() {
 
         <div className="bg-[#0d1238] border border-gray-800 rounded-xl p-8">
           {errors.general && (
-            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
-              <AlertCircle className="size-5 text-red-500 shrink-0 mt-0.5" />
-              <p className="text-sm text-red-400">{errors.general}</p>
+            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex gap-3">
+              <AlertCircle className="size-5 text-red-500" />
+              <p className="text-sm text-red-400">
+                {errors.general}
+              </p>
             </div>
           )}
 
           <button
-            onClick={handleGoogleLogin}
+            onClick={handleGoogle}
             disabled={isGoogleLoading || isLoading}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-gray-900 rounded-lg font-medium transition-colors mb-6"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white hover:bg-gray-100 disabled:bg-gray-700 disabled:text-gray-500 text-gray-900 rounded-lg font-medium mb-6"
           >
             {isGoogleLoading ? (
               <div className="size-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
@@ -124,50 +114,59 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm text-gray-300 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-500" />
                 <input
+                  placeholder="Email"
                   value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (errors.email)
-                      setErrors({ ...errors, email: undefined });
-                  }}
+                  onChange={(e) => setEmail(e.target.value)}
                   className={`w-full bg-[#0a0e27] text-white border ${
-                    errors.email ? "border-red-500" : "border-gray-700"
+                    errors.email
+                      ? "border-red-500"
+                      : "border-gray-700"
                   } rounded-lg pl-11 pr-4 py-3`}
                 />
               </div>
             </div>
 
-
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">
+              <label className="block text-sm text-gray-300 mb-2">
                 Password
               </label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 size-5 text-gray-500" />
                 <input
+                  placeholder="Password"
                   type={showPassword ? "text" : "password"}
                   value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    if (errors.password)
-                      setErrors({ ...errors, password: undefined });
-                  }}
+                  onChange={(e) =>
+                    setPassword(e.target.value)
+                  }
                   className="w-full bg-[#0a0e27] text-white border border-gray-700 rounded-lg pl-11 pr-12 py-3"
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute text-white right-3 top-1/2 -translate-y-1/2"
+                  onClick={() =>
+                    setShowPassword((v) => !v)
+                  }
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white"
                 >
                   {showPassword ? <EyeOff /> : <Eye />}
                 </button>
               </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={onNavigateToForgotPassword}
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                Forgot password?
+              </button>
             </div>
 
             <button
@@ -183,7 +182,7 @@ export default function LoginPage() {
         <p className="text-center mt-6 text-gray-400">
           Don’t have an account?{" "}
           <button
-            onClick={() => navigate("/signup")}
+            onClick={onNavigateToSignup}
             className="text-blue-400 hover:text-blue-300"
           >
             Sign up
@@ -192,4 +191,4 @@ export default function LoginPage() {
       </div>
     </div>
   );
-}
+} 
