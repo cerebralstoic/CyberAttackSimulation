@@ -48,7 +48,7 @@ function App() {
     if (authPage === "forgot") {
       return (
         <ForgotPasswordPage
-          onForgotPassword={resetPassword}
+          onResetPassword={resetPassword}
           onNavigateToLogin={() => setAuthPage("login")}
         />
       );
