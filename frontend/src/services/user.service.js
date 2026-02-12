@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp} from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, increment} from "firebase/firestore";
 import {db} from "../firebase/firebase";
 
 export async function createUserIfNotExists(user) {
@@ -22,4 +22,11 @@ export async function createUserIfNotExists(user) {
       lastLogin: serverTimestamp(),
     });
   }
+}
+
+export async function incrementUserStat(userId, field){
+  const ref = doc(db,"users", userId);
+  await updateDoc(ref, {
+    [`stats.${field}`]: increment(1)
+  });
 }
