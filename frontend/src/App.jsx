@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { listenToAuthChanges, login, loginWithGoogle, signup, resetPassword } from "./services/auth.service";
+import {
+  listenToAuthChanges,
+  login,
+  loginWithGoogle,
+  signup,
+  resetPassword,
+} from "./services/auth.service";
+
+import { createUserIfNotExists } from "./services/user.service.js";
 
 import Navbar from "./components/Navbar.jsx";
 import { Sidebar } from "./components/Sidebar.jsx";
@@ -19,10 +27,14 @@ function App() {
   const [selectedLab, setSelectedLab] = useState(null);
 
   useEffect(() => {
-    const unsub = listenToAuthChanges((u) => {
+    const unsub = listenToAuthChanges(async (u) => {
+      if (u) {
+        await createUserIfNotExists(u);
+      }
       setUser(u);
       setAuthLoading(false);
     });
+
     return () => unsub();
   }, []);
 
@@ -38,7 +50,9 @@ function App() {
     if (authPage === "signup") {
       return (
         <SignupPage
-          onSignup={(name, email, password) => signup(email, password, name)}
+          onSignup={(name, email, password) =>
+            signup(email, password, name)
+          }
           onGoogleSignup={loginWithGoogle}
           onNavigateToLogin={() => setAuthPage("login")}
         />
