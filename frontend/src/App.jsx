@@ -100,6 +100,7 @@ function App() {
           <LabInterface
             lab={selectedLab}
             onBack={() => setSelectedLab(null)}
+            user={user}
           />
         )}
       </main>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { startLab, stopLab } from "../api/labs";
+import { markLabStarted, markLabCompleted } from "../services/user.service";
 
 const LAB_TYPE_MAP = {
   "sql-injection": "sqli",
@@ -8,7 +9,7 @@ const LAB_TYPE_MAP = {
   "file-upload": "uploadfile",
 };
 
-export default function LabInterface({ lab, onBack }) {
+export default function LabInterface({ lab, onBack, user }) {
   const [instance, setInstance] = useState(null);
   const [remaining, setRemaining] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -39,6 +40,12 @@ export default function LabInterface({ lab, onBack }) {
 
       const type = LAB_TYPE_MAP[lab.category];
       const res = await startLab(type);
+      if (!res || !res.containerName || !res.url || !res.ttl) {
+        throw new Error("Invalid lab instance response from server");
+      }else{
+        await markLabStarted(user.uid);
+      }
+
 
       const persisted = {
         ...res,
@@ -59,6 +66,7 @@ export default function LabInterface({ lab, onBack }) {
     try {
       setLoading(true);
       await stopLab(instance.containerName);
+      await markLabCompleted(user.uid);
       localStorage.removeItem("runningLab");
       setInstance(null);
       setRemaining(null);
