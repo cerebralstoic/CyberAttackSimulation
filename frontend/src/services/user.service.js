@@ -1,5 +1,5 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, increment} from "firebase/firestore";
-import {db} from "../firebase/firebase";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
+import { db } from "../firebase/firebase";
 
 export async function createUserIfNotExists(user) {
   const ref = doc(db, "users", user.uid);
@@ -24,9 +24,33 @@ export async function createUserIfNotExists(user) {
   }
 }
 
-export async function incrementUserStat(userId, field){
-  const ref = doc(db,"users", userId);
+export async function incrementUserStat(userId, field) {
+  const ref = doc(db, "users", userId);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    throw new Error("User document not found");
+  }
+
   await updateDoc(ref, {
-    [`stats.${field}`]: increment(1)
+    [`stats.${field}`]: increment(1),
+  });
+}
+
+export async function markLabStarted(userId) {
+  await updateDoc(doc(db, "users", userId), {
+    "stats.totalLabsStarted": increment(1),
+  });
+}
+
+export async function markLabCompleted(userId) {
+  await updateDoc(doc(db, "users", userId), {
+    "stats.totalLabsCompleted": increment(1),
+  });
+}
+
+export async function incrementAttempt(userId) {
+  await updateDoc(doc(db, "users", userId), {
+    "stats.totalAttempts": increment(1),
   });
 }
