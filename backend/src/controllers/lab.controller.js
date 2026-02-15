@@ -8,6 +8,8 @@ import { stopLab } from "../services/docker.service.js";
 import { cancelTTL } from "../services/ttl.service.js";
 import { getLab } from "../registry/getLab.js";
 import { scheduleTTL } from "../services/ttl.service.js";
+import { incrementUserStat } from "../services/userStat.service.js";
+
 
 const LAB_STARTERS = {
   startSqlLab,
@@ -19,6 +21,7 @@ const LAB_STARTERS = {
 export async function startLab(req, res) {
   try {
     const { type } = req.body;
+    const userId = req.user.uid;
 
     const lab = getLab(type);
 
@@ -29,7 +32,7 @@ export async function startLab(req, res) {
 
     const instance = await starterFn();
 
-
+    await incrementUserStat(userId, "totalAttempts");
     scheduleTTL(instance.containerName, lab.ttl);
 
     res.json({
