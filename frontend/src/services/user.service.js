@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc, serverTimestamp, increment } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, serverTimestamp, increment, onSnapshot } from "firebase/firestore";
 import { db } from "../firebase/firebase";
 
 export async function createUserIfNotExists(user) {
@@ -52,5 +52,17 @@ export async function markLabCompleted(userId) {
 export async function incrementAttempt(userId) {
   await updateDoc(doc(db, "users", userId), {
     "stats.totalAttempts": increment(1),
+  });
+}
+
+export function listenToUserStats(userId, callback) {
+  const ref = doc(db, "users", userId);
+
+  return onSnapshot(ref, (snap) => {
+    if (snap.exists()) {
+      callback(snap.data().stats);
+    } else {
+      callback(null);
+    }
   });
 }

@@ -1,5 +1,8 @@
 import { Activity, CheckCircle2, Target, TrendingUp } from "lucide-react";
 import { LabCard } from "../components/Labcard.jsx";
+import { useEffect, useState } from "react";
+import { listenToUserStats } from "../services/user.service";
+import { auth } from "../firebase/firebase";
 
 const activeLabs = [
   {
@@ -41,32 +44,64 @@ const completedLabs = [
 ];
 
 export function Dashboard({ onLabSelect }) {
+  const [statsData, setStatsData] = useState(null);
+
+  useEffect(() => {
+    if (!auth.currentUser) return;
+
+    const unsubscribe = listenToUserStats(
+      auth.currentUser.uid,
+      (stats) => {
+        setStatsData(stats);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  if (!statsData) {
+    return (
+      <div className="text-gray-400">
+        Loading dashboard stats...
+      </div>
+    );
+  }
+
+  const successRate =
+    statsData.totalLabsStarted > 0
+      ? Math.round(
+          (statsData.totalLabsCompleted /
+            statsData.totalLabsStarted) *
+            100
+        )
+      : 0;
+
   const stats = [
     {
       icon: Activity,
       label: "Active Labs",
-      value: "2",
+      value: statsData.totalLabsStarted,
       color: "text-blue-500",
       bgColor: "bg-blue-500/10",
     },
     {
       icon: CheckCircle2,
       label: "Completed",
-      value: "1",
+      value: statsData.totalLabsCompleted,
       color: "text-green-500",
       bgColor: "bg-green-500/10",
     },
     {
       icon: Target,
       label: "Total Attempts",
-      value: "10",
+      value: statsData.totalAttempts,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
     },
     {
       icon: TrendingUp,
       label: "Success Rate",
-      value: "67%",
+      value: `${successRate}%`,
       color: "text-orange-500",
       bgColor: "bg-orange-500/10",
     },
