@@ -9,6 +9,7 @@ import { cancelTTL } from "../services/ttl.service.js";
 import { getLab } from "../registry/getLab.js";
 import { scheduleTTL } from "../services/ttl.service.js";
 import { incrementUserStat } from "../services/userStat.service.js";
+import { createLabHistory } from "../services/labHistory.service.js";
 
 
 const LAB_STARTERS = {
@@ -21,9 +22,17 @@ const LAB_STARTERS = {
 export async function startLab(req, res) {
   try {
     const { type } = req.body;
+    if (!type) {
+      return res.status(400).json({
+        error: "Lab type is required",
+      });
+    }
     const userId = req.user.uid;
 
     const lab = getLab(type);
+    if(!lab){
+      return res.status(404).json({ error: "Lab not found" });
+    }
 
     const starterFn = LAB_STARTERS[lab.starter];
     if (!starterFn) {
@@ -34,6 +43,17 @@ export async function startLab(req, res) {
 
     await incrementUserStat(userId, "totalAttempts");
     scheduleTTL(instance.containerName, lab.ttl);
+
+    await createLabHistory({
+      userId,
+      labId: lab.id,
+      name: lab.name,
+      category: lab.category,
+      difficulty: lab.difficulty,
+      containerName: instance.containerName,
+      startedAt: new Date(),
+      status: "running",
+    });
 
     res.json({
       lab: lab.id,
