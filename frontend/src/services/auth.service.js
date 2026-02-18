@@ -15,6 +15,11 @@ export async function signup(email, password, name){
     await updateProfile(cred.user, {
         displayName: name,
     });
+    await createUserIfNotExists({
+        ...cred.user,
+        displayName: name,
+    });
+
     return cred;
 }
 
