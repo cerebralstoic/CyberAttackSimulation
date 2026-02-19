@@ -22,12 +22,13 @@ export async function startLab(type) {
     body: JSON.stringify({ type }),
   });
 
+  const data = await res.json();
   if (!res.ok) {
     const err = await res.json();
     throw new Error(err.error || "Failed to start lab");
   }
 
-  return res.json();
+  return data;
 }
 
 export async function stopLab(containerName) {
