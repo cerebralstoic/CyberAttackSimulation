@@ -65,7 +65,7 @@ export default function LabInterface({ lab, onBack, user }) {
   async function handleStop() {
     try {
       setLoading(true);
-      await stopLab(instance.containerName);
+      await stopLab(instance.containerName, instance.historyId);
       await markLabCompleted(user.uid);
       localStorage.removeItem("runningLab");
       setInstance(null);

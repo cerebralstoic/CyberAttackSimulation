@@ -31,13 +31,13 @@ export async function startLab(type) {
   return data;
 }
 
-export async function stopLab(containerName) {
+export async function stopLab(containerName, historyId) {
   const headers = await getAuthHeader();
 
   const res = await fetch(`${API}/stop`, {
     method: "POST",
     headers,
-    body: JSON.stringify({ containerName }),
+    body: JSON.stringify({ containerName, historyId}),
   });
 
   if (!res.ok) {

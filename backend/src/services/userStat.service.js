@@ -15,8 +15,6 @@ export async function createLabHistory(userId, labData) {
     .doc(userId)
     .collection("labHistory")
     .doc();
-
-  console.log("Creating lab history entry for user:", userId, "labData:", labData);
   await ref.set({
     labId: labData.labId,
     name: labData.name,
