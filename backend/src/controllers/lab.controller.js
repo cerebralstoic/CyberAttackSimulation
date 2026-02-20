@@ -8,7 +8,7 @@ import { stopLab } from "../services/docker.service.js";
 import { cancelTTL } from "../services/ttl.service.js";
 import { getLab } from "../registry/getLab.js";
 import { scheduleTTL } from "../services/ttl.service.js";
-import { incrementUserStat } from "../services/userStat.service.js";
+import { completeLabHistoryEntry, incrementUserStat } from "../services/userStat.service.js";
 import { createLabHistory } from "../services/userStat.service.js";
 
 const LAB_STARTERS = {
@@ -42,7 +42,6 @@ export async function startLab(req, res) {
 
     await incrementUserStat(userId, "totalAttempts");
     scheduleTTL(instance.containerName, lab.ttl);
-    console.log(`Lab ${lab.name} started for user ${userId}, container: ${instance.containerName}`);
     const historyId = await createLabHistory(userId, {
       labId: lab.id,
       name: lab.name,
@@ -50,7 +49,6 @@ export async function startLab(req, res) {
       difficulty: lab.difficulties[0],
       containerName: instance.containerName,
     });
-    console.log(`Lab history entry created with ID: ${historyId} for user ${userId}`);
     res.json({
       lab: lab.id,
       containerName: instance.containerName,
@@ -69,7 +67,7 @@ export async function startLab(req, res) {
 
 export async function stopLabController(req, res) {
   try {
-    const { containerName } = req.body;
+    const { containerName,historyId } = req.body;
 
     if (!containerName) {
       return res.status(400).json({ error: "containerName required" });
@@ -77,7 +75,9 @@ export async function stopLabController(req, res) {
 
     cancelTTL(containerName);
     await stopLab(containerName);
-
+    if(historyId){
+      await completeLabHistoryEntry(req.user.uid,historyId);
+    }
     res.json({
       containerName,
       status: "stopped",
