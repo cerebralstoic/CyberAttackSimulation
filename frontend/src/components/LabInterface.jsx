@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { startLab, stopLab } from "../api/labs";
+import { completeLab, startLab, stopLab } from "../api/labs";
 import { markLabStarted, markLabCompleted } from "../services/user.service";
 
 const LAB_TYPE_MAP = {
@@ -14,6 +14,7 @@ export default function LabInterface({ lab, onBack, user }) {
   const [remaining, setRemaining] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [flag, setFlag] = useState("");
 
 
   useEffect(() => {
@@ -39,14 +40,13 @@ export default function LabInterface({ lab, onBack, user }) {
       setError(null);
 
       const type = LAB_TYPE_MAP[lab.category];
-      const res = await startLab(type);
+      if(!type){
+        throw new Error("Lab type isn't defined");
+      }
+      const res = await startLab(type, user.uid);
       if (!res || !res.containerName || !res.url || !res.ttl) {
         throw new Error("Invalid lab instance response from server");
-      }else{
-        await markLabStarted(user.uid);
       }
-
-
       const persisted = {
         ...res,
         startedAt: Date.now(),
@@ -65,11 +65,12 @@ export default function LabInterface({ lab, onBack, user }) {
   async function handleStop() {
     try {
       setLoading(true);
-      await stopLab(instance.containerName, instance.historyId);
-      await markLabCompleted(user.uid);
+      if (!instance?.containerName) return;
+      await stopLab(instance.containerName);
       localStorage.removeItem("runningLab");
       setInstance(null);
       setRemaining(null);
+      setFlag("");
     } catch (e) {
       setError(e.message);
     } finally {
@@ -77,6 +78,31 @@ export default function LabInterface({ lab, onBack, user }) {
     }
   }
 
+  async function handleSubmitFlag(){
+    try{
+      setLoading(true);
+      setError(null);
+      const type = LAB_TYPE_MAP[lab.category];
+      if(!type){
+        throw new Error("Lab type isn't defined");
+      }
+      if (!instance || !user) return;
+      const res = await completeLab(instance.historyId, flag, type, user.uid);
+      if(res.success==true){
+        await stopLab(instance.containerName);
+      }else{
+        throw new Error("Lab isn't completed yet");
+      }
+      localStorage.removeItem("runningLab");
+      setInstance(null);
+      setRemaining(null);
+      setFlag("");
+    }catch (e) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
   useEffect(() => {
     if (remaining === null) return;
 
@@ -139,6 +165,19 @@ export default function LabInterface({ lab, onBack, user }) {
           >
             Open Lab
           </a>
+          <div className="flex gap-3">
+            <input
+            value={flag}
+            onChange={(e) => setFlag(e.target.value)}
+            placeholder="Enter flag"
+            className="flex-1 bg-[#0a0e27] border border-gray-700 px-4 py-2 rounded text-white"
+            />
+            <button
+              onClick={handleSubmitFlag}
+              disabled ={loading}
+              className="px-4 py-2 bg-green-600 rounded hover:bg-green-700"
+              >Submit</button>
+          </div>
 
           <button
             onClick={handleStop}
