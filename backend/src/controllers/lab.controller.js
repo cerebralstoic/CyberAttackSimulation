@@ -67,7 +67,7 @@ export async function startLab(req, res) {
 
 export async function stopLabController(req, res) {
   try {
-    const { containerName,historyId } = req.body;
+    const { containerName} = req.body;
 
     if (!containerName) {
       return res.status(400).json({ error: "containerName required" });
@@ -75,9 +75,6 @@ export async function stopLabController(req, res) {
 
     cancelTTL(containerName);
     await stopLab(containerName);
-    if(historyId){
-      await completeLabHistoryEntry(req.user.uid,historyId);
-    }
     res.json({
       containerName,
       status: "stopped",
@@ -86,5 +83,32 @@ export async function stopLabController(req, res) {
     res.status(500).json({
       error: err.message,
     });
+  }
+}
+
+export async function completeLabController(req, res){
+  try{
+    const {historyId, flag , type } = req.body;
+    const userId = req.user.uid;
+
+    if(!historyId || !flag || !type){
+      return res.status(400).json({error: "Missing fields"});
+    }
+    const lab = getLab(type);
+
+    if(!lab){
+      return res.status(404).json({error: "Lab not found"});
+    }
+
+    if(lab.flag !==flag){
+      await incrementUserStat(userId, "totalAttempts");
+      return res.status(400).json({error: "Incorrect flag"});
+    }
+
+    await completeLabHistoryEntry(userId, historyId);
+    
+    res.json({ success: true});
+  }catch(err){
+    res.status(500).json({error: err.message});
   }
 }

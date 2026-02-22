@@ -7,6 +7,7 @@ const LAB_REGISTRY = {
     starter: "startSqlLab",
     ttl: 20,
     difficulties: ["easy", "medium", "hard", "secure"],
+    flag: "FLAG{sql_master}",
     enabled: true,
   },
 
@@ -18,6 +19,7 @@ const LAB_REGISTRY = {
     image: "xss-lab",
     category: "client-side",
     difficulties: ["easy", "medium", "hard", "secure"],
+    flag: "FLAG{xss_hunter}",
     enabled: true,
   },
 
@@ -30,6 +32,7 @@ const LAB_REGISTRY = {
     ttl: 15,
     category: "server-side",
     difficulties: ["easy", "medium", "hard", "secure"],
+    flag: "FLAG{cmdi_shell_access}",
     enabled: true,
   },
 
@@ -40,6 +43,7 @@ const LAB_REGISTRY = {
     category: "server-side",
     ttl: 10,
     difficulties: ["easy", "medium", "hard", "secure"],
+    flag: "FLAG{file_upload_bypass}",
     enabled: true,
   },
 };
