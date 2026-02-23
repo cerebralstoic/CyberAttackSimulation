@@ -10,6 +10,9 @@ $mode = $_POST["mode"] ?? "vulnerable";
 $difficulty = $_POST["difficulty"] ?? "easy";
 $input = $_POST["comment"] ?? "";
 
+$FLAG = "FLAG{xss_hunter}";
+$flagReveal = null;
+
 $status = "vulnerable";
 $message = "";
 $explanation = "";
@@ -62,6 +65,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
   }
 
   $explanation = explainStoredXSS($input, $mode, $difficulty);
+
+  if ($status === "success") {
+      $flagReveal = $FLAG;
+  }
 }
 
 $comments = $db->query("SELECT content FROM comments ORDER BY id DESC");
@@ -73,89 +80,145 @@ $comments = $db->query("SELECT content FROM comments ORDER BY id DESC");
 <title>Stored XSS Lab</title>
 <style>
 body {
-  background:#020617;
-  color:#e5e7eb;
-  font-family:system-ui;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+    background:#020617;
+    color:#e5e7eb;
+    font-family:system-ui;
+    margin:0;
+    padding:40px;
 }
 .container {
-  width:440px;
-  padding:24px;
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:14px;
-  box-shadow:0 0 40px rgba(37,99,235,.15);
+    max-width:1200px;
+    margin:auto;
 }
-h1 { text-align:center; color:#60a5fa; }
-
-.status-ball {
-  width:14px;
-  height:14px;
-  margin:12px auto;
-  border-radius:50%;
-  animation:pulse 1.8s infinite;
+.header {
+    margin-bottom:30px;
 }
-.vulnerable { background:#22c55e; box-shadow:0 0 12px #22c55e; }
-.secure { background:#3b82f6; box-shadow:0 0 12px #3b82f6; }
-.success { background:#ef4444; box-shadow:0 0 14px #ef4444; }
-
-@keyframes pulse {
-  0% { transform:scale(.9); opacity:.6 }
-  50% { transform:scale(1.2); opacity:1 }
-  100% { transform:scale(.9); opacity:.6 }
+.header h1 {
+    font-size:28px;
+    margin-bottom:6px;
 }
-
-label { font-size:13px; display:block; margin-top:10px }
-textarea, select, button {
-  width:100%;
-  padding:10px;
-  margin-top:4px;
-  border-radius:8px;
-  border:1px solid #334155;
-  background:#020617;
-  color:white;
+.subtitle {
+    color:#94a3b8;
 }
-button {
-  margin-top:14px;
-  background:#2563eb;
-  border:none;
-  cursor:pointer;
+.grid {
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:24px;
 }
-button:hover { background:#1d4ed8 }
-
-.box {
-  margin-top:16px;
-  padding:10px;
-  font-size:13px;
-  border-radius:8px;
-  background:#020617;
-  border:1px dashed #334155;
-  color:#facc15;
+.card {
+    background:#0d1238;
+    border:1px solid #1e293b;
+    border-radius:16px;
+    padding:24px;
+}
+.section-title {
+    font-size:18px;
+    margin-bottom:20px;
+}
+label {
+    font-size:14px;
+    color:#cbd5e1;
+    display:block;
+    margin-bottom:6px;
+}
+select, textarea {
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #334155;
+    background:#0a0e27;
+    color:#e5e7eb;
+    margin-bottom:14px;
+}
+textarea {
+    min-height:100px;
+}
+.execute-btn {
+    padding:14px 22px;
+    border-radius:10px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+}
+.execute-btn:hover {
+    background:#1d4ed8;
+}
+.output-box {
+    background:#0a0e27;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:16px;
+    font-family:monospace;
+    white-space:pre-wrap;
+}
+.flag-box {
+    margin-top:16px;
+    padding:18px;
+    border-radius:14px;
+    background:#0f172a;
+    border:1px solid #22c55e;
+    color:#22c55e;
+    font-weight:bold;
+    text-align:center;
+    box-shadow:0 0 20px rgba(34,197,94,.4);
 }
 .comment {
-  padding:8px;
-  margin-top:8px;
-  border:1px solid #334155;
-  border-radius:6px;
+    padding:10px;
+    margin-top:10px;
+    border:1px solid #334155;
+    border-radius:8px;
+    background:#0a0e27;
+}
+.payload {
+    background:#0a0e27;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #334155;
+    margin-top:10px;
+    font-family:monospace;
+    font-size:13px;
 }
 </style>
 </head>
 <body>
+
 <div class="container">
+
+<div class="header">
 <h1>🧨 Stored XSS Lab</h1>
-
-<div class="status-ball <?= $status ?>"></div>
-
-<div class="box">
-  <a href="/" style="color:#60a5fa">Reflected</a> |
-  <a href="/dom.html" style="color:#60a5fa">DOM</a> |
-  <strong>Stored</strong>
+<p class="subtitle">Persist malicious payloads and observe execution upon rendering.</p>
 </div>
+<div style="margin-bottom:30px; border-bottom:1px solid #1e293b;">
+  <div style="display:flex; gap:20px;">
+
+    <a href="index.php"
+       style="padding:12px 0; color:#94a3b8; text-decoration:none;">
+       Reflected XSS
+    </a>
+
+    <a href="dom.html"
+       style="padding:12px 0; color:#94a3b8; text-decoration:none;">
+       DOM XSS
+    </a>
+
+    <a href="stored.php"
+       style="padding:12px 0; font-weight:600; color:#60a5fa; border-bottom:2px solid #3b82f6; text-decoration:none;">
+       Stored XSS
+    </a>
+
+  </div>
+</div>
+<div class="grid">
+
+<div>
+
+<div class="card">
+<h2 class="section-title">Lab Configuration</h2>
 
 <form method="POST">
+
 <label>Mode</label>
 <select name="mode">
   <option value="vulnerable" <?= $mode==="vulnerable"?"selected":"" ?>>Vulnerable</option>
@@ -169,25 +232,72 @@ button:hover { background:#1d4ed8 }
   <option value="hard">Hard</option>
 </select>
 
-<label>Comment</label>
-<textarea name="comment" placeholder="<script>alert('stored')</script>"></textarea>
+<label>Comment Payload</label>
+<textarea name="comment" placeholder="Enter stored XSS payload..."></textarea>
 
-<button>Post Comment</button>
+<button class="execute-btn">Post Comment</button>
+
 </form>
 
 <?php if ($message): ?>
-<div class="box"><?= htmlspecialchars($message) ?></div>
+<div class="output-box" style="margin-top:16px;">
+<?= htmlspecialchars($message) ?>
+</div>
+<?php endif; ?>
+
+<?php if ($flagReveal): ?>
+<div class="flag-box">
+🚩 <?= htmlspecialchars($flagReveal) ?>
+</div>
 <?php endif; ?>
 
 <?php if ($explanation): ?>
-<div class="box"><strong>Payload Analysis:</strong><br><?= htmlspecialchars($explanation) ?></div>
+<div class="output-box" style="margin-top:16px;">
+<strong>Payload Analysis:</strong><br>
+<?= htmlspecialchars($explanation) ?>
+</div>
 <?php endif; ?>
 
-<h3 style="margin-top:16px">Comments</h3>
+</div>
+
+<div class="card" style="margin-top:24px;">
+<h2 class="section-title">Stored Comments</h2>
 
 <?php while ($row = $comments->fetchArray()): ?>
 <div class="comment"><?= $row["content"] ?></div>
 <?php endwhile; ?>
+
+</div>
+
+</div>
+
+<div>
+
+<div class="card">
+<h2 class="section-title">Lab Info</h2>
+<p><strong>Category:</strong> Cross-Site Scripting</p>
+<p><strong>Type:</strong> Stored XSS</p>
+<p><strong>Status:</strong> <?= ucfirst($status) ?></p>
+</div>
+
+<div class="card" style="margin-top:24px;">
+<h2 class="section-title">Payload Guide</h2>
+
+<div class="payload">
+Basic:<br>
+&lt;script&gt;alert('stored')&lt;/script&gt;
+</div>
+
+<div class="payload">
+Advanced:<br>
+&lt;img src=x onerror=alert(1)&gt;
+</div>
+
+</div>
+
+</div>
+
+</div>
 
 </div>
 </body>
