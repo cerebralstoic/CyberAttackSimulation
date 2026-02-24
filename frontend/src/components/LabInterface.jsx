@@ -6,7 +6,7 @@ const LAB_TYPE_MAP = {
   "sql-injection": "sqli",
   xss: "xss",
   "command-injection": "cmdi",
-  "file-upload": "uploadfile",
+  "file-upload": "upload",
 };
 
 export default function LabInterface({ lab, onBack, user }) {

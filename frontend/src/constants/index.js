@@ -55,5 +55,35 @@ export const LAB_CATEGORIES = [
       },
     ],
   },
+  {
+    id: "command-injection",
+    name: "Command Injection",
+    icon: Terminal,
+    labs: [
+      {
+        id: "cmd-1",
+        type: "basic",
+        name: "Basic Command Injection",
+        status: "vulnerable",
+        attempts: 1, 
+        completed: false,
+      },
+    ],
+  },
+  {
+    id: "file-upload",
+    name: "File Upload Vulnerabilities",
+    icon: Upload,
+    labs: [
+      {
+        id: "upload-1",
+        type: "basic",
+        name: "Unrestricted File Upload",
+        status: "vulnerable",
+        attempts: 0,
+        completed: false,
+      },
+    ],
+  },  
   
 ];
