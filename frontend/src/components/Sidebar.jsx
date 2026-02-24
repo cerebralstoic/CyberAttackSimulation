@@ -9,7 +9,7 @@ export function Sidebar({
   selectedLabId,
 }) {
   const [expandedCategories, setExpandedCategories] = useState(
-    new Set(["sql-injection", "xss"])
+    new Set(["sql-injection", "xss", "cmdi", "upload"])
   );
 
   const toggleCategory = (categoryId) => {
