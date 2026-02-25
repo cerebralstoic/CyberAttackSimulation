@@ -2,6 +2,9 @@
 $mode = $_POST["mode"] ?? "vulnerable";
 $difficulty = $_POST["difficulty"] ?? "easy";
 
+$FLAG = "FLAG{file_upload_bypass}";
+$flagReveal = null;
+
 $message = "";
 $status = "vulnerable";
 
@@ -10,12 +13,14 @@ if (!is_dir("uploads")) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["file"])) {
+
   $file = $_FILES["file"];
   $filename = basename($file["name"]);
   $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
   $mime = mime_content_type($file["tmp_name"]);
 
   if ($mode === "secure") {
+
     $allowedExt = ["jpg", "png"];
     $allowedMime = ["image/jpeg", "image/png"];
 
@@ -28,8 +33,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["file"])) {
       $message = "File uploaded safely";
       $status = "secure";
     }
+
   } else {
+
     if ($difficulty === "medium") {
+
       if ($ext !== "jpg" && $ext !== "png") {
         $message = "Only image extensions allowed";
         $status = "vulnerable";
@@ -37,7 +45,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["file"])) {
         move_uploaded_file($file["tmp_name"], "uploads/" . $filename);
         $message = "File uploaded";
       }
+
     } elseif ($difficulty === "hard") {
+
       if (strpos($mime, "image") === false) {
         $message = "Invalid MIME type";
         $status = "vulnerable";
@@ -45,9 +55,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["file"])) {
         move_uploaded_file($file["tmp_name"], "uploads/" . $filename);
         $message = "File uploaded";
       }
+
     } else {
+
       move_uploaded_file($file["tmp_name"], "uploads/" . $filename);
       $message = "File uploaded";
+    }
+
+    if ($difficulty === "easy" && $ext === "php") {
+      $flagReveal = $FLAG;
     }
   }
 }
@@ -59,56 +75,115 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["file"])) {
 <title>File Upload Lab</title>
 <style>
 body {
-  background:#020617;
-  color:#e5e7eb;
-  font-family:system-ui;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
+    background:#020617;
+    color:#e5e7eb;
+    font-family:system-ui;
+    margin:0;
+    padding:40px;
 }
-.container {
-  width:460px;
-  padding:24px;
-  background:#020617;
-  border:1px solid #1e293b;
-  border-radius:14px;
-  box-shadow:0 0 40px rgba(37,99,235,.15);
+.container { max-width:1200px; margin:auto; }
+
+.header { margin-bottom:30px; }
+.header h1 { font-size:28px; margin-bottom:6px; }
+.subtitle { color:#94a3b8; }
+
+.grid {
+    display:grid;
+    grid-template-columns:2fr 1fr;
+    gap:24px;
 }
-h1 { text-align:center; color:#60a5fa; }
-label { font-size:13px; display:block; margin-top:10px }
-input, select, button {
-  width:100%;
-  padding:10px;
-  margin-top:4px;
-  border-radius:8px;
-  border:1px solid #334155;
-  background:#020617;
-  color:white;
+
+.card {
+    background:#0d1238;
+    border:1px solid #1e293b;
+    border-radius:16px;
+    padding:24px;
 }
-button {
-  margin-top:14px;
-  background:#2563eb;
-  border:none;
-  cursor:pointer;
+
+.section-title { font-size:18px; margin-bottom:20px; }
+
+label {
+    font-size:14px;
+    color:#cbd5e1;
+    display:block;
+    margin-bottom:6px;
 }
-.box {
-  margin-top:14px;
-  padding:10px;
-  border-radius:8px;
-  background:#020617;
-  border:1px dashed #334155;
-  color:#facc15;
-  font-size:13px;
+
+select, input[type="file"] {
+    width:100%;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #334155;
+    background:#0a0e27;
+    color:#e5e7eb;
+    margin-bottom:14px;
 }
-a { color:#38bdf8 }
+
+.execute-btn {
+    padding:14px 22px;
+    border-radius:10px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+    font-weight:600;
+    width:100%;
+}
+
+.execute-btn:hover { background:#1d4ed8; }
+
+.output-box {
+    background:#0a0e27;
+    border:1px solid #334155;
+    border-radius:12px;
+    padding:16px;
+    font-family:monospace;
+    white-space:pre-wrap;
+}
+
+.flag-box {
+    margin-top:16px;
+    padding:18px;
+    border-radius:14px;
+    background:#0f172a;
+    border:1px solid #22c55e;
+    color:#22c55e;
+    font-weight:bold;
+    text-align:center;
+    box-shadow:0 0 20px rgba(34,197,94,.4);
+}
+
+.payload {
+    background:#0a0e27;
+    padding:12px;
+    border-radius:10px;
+    border:1px solid #334155;
+    margin-top:10px;
+    font-family:monospace;
+    font-size:13px;
+}
+
+a { color:#38bdf8; text-decoration:none; }
 </style>
 </head>
 <body>
+
 <div class="container">
+
+<div class="header">
 <h1>📁 File Upload Lab</h1>
+<p class="subtitle">Test file upload restrictions and bypass techniques.</p>
+</div>
+
+<div class="grid">
+
+<div>
+
+<div class="card">
+<h2 class="section-title">Lab Configuration</h2>
 
 <form method="POST" enctype="multipart/form-data">
+
 <label>Mode</label>
 <select name="mode">
   <option value="vulnerable">Vulnerable</option>
@@ -122,21 +197,66 @@ a { color:#38bdf8 }
   <option value="hard">Hard</option>
 </select>
 
-<label>Choose File</label>
+<label>Select File</label>
 <input type="file" name="file">
 
-<button>Upload</button>
+<button class="execute-btn">Upload</button>
+
 </form>
+</div>
 
 <?php if ($message): ?>
-<div class="box"><?= htmlspecialchars($message) ?></div>
+<div class="card" style="margin-top:24px;">
+<h2 class="section-title">Upload Result</h2>
+<div class="output-box">
+<?= htmlspecialchars($message) ?>
+</div>
+
+<?php if ($flagReveal): ?>
+<div class="flag-box">
+🚩 <?= htmlspecialchars($flagReveal) ?>
+</div>
 <?php endif; ?>
 
-<div class="box">
-<strong>Uploads Directory:</strong><br>
-<a href="/uploads/" target="_blank">/uploads/</a>
+</div>
+<?php endif; ?>
+
+</div>
+
+<div>
+
+<div class="card">
+<h2 class="section-title">Lab Info</h2>
+<p><strong>Category:</strong> File Upload</p>
+<p><strong>Risk:</strong> Remote Code Execution</p>
+<p><strong>Upload Path:</strong> /uploads/</p>
+</div>
+
+<div class="card" style="margin-top:24px;">
+<h2 class="section-title">Payload Guide</h2>
+
+<div class="payload">
+Basic Bypass:<br>
+shell.php
+</div>
+
+<div class="payload">
+Advanced:<br>
+shell.php.jpg
 </div>
 
 </div>
+
+<div class="card" style="margin-top:24px;">
+<h2 class="section-title">Uploads Directory</h2>
+<a href="/uploads/" target="_blank">Browse /uploads/</a>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
 </body>
 </html>
