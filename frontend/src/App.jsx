@@ -17,6 +17,7 @@ import LabInterface from "./components/LabInterface.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import SignupPage from "./pages/SignupPage.jsx";
 import ForgotPasswordPage from "./pages/ForgetPass.jsx";
+import { RightSidebar } from "./components/RightSidebar.jsx";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -90,7 +91,7 @@ function App() {
       />
 
       <main
-        className={`pt-16 px-6 transition-all duration-300 ${
+        className={`pt-16 px-6 transition-all duration-300 mr-70 pb-3 ${
           sidebarCollapsed ? "ml-16" : "ml-64"
         }`}
       >
@@ -104,6 +105,7 @@ function App() {
           />
         )}
       </main>
+      <RightSidebar/>
     </div>
   );
 }

@@ -1,9 +1,5 @@
-import { Activity, CheckCircle2, Target, TrendingUp } from "lucide-react";
+import { CheckCircle2} from "lucide-react";
 import { LabCard } from "../components/Labcard.jsx";
-import { useEffect, useState } from "react";
-import { listenToUserStats } from "../services/user.service";
-import { subscribeToLeaderboard } from "../services/leaderboard.services.js";
-import { auth } from "../firebase/firebase";
 
 const activeLabs = [
   {
@@ -14,7 +10,6 @@ const activeLabs = [
     description:
       "Learn how stored XSS attacks work and how to identify vulnerable input fields.",
     status: "vulnerable",
-    attempts: 2,
     completed: false,
   },
   {
@@ -25,7 +20,6 @@ const activeLabs = [
     description:
       "Practice blind SQL injection techniques using boolean-based and time-based attacks.",
     status: "secure",
-    attempts: 3,
     completed: false,
   },
 ];
@@ -39,81 +33,11 @@ const completedLabs = [
     description:
       "Master reflected XSS by exploiting unvalidated user input in web applications.",
     status: "exploited",
-    attempts: 5,
     completed: true,
   },
 ];
 
 export function Dashboard({ onLabSelect }) {
-  const [statsData, setStatsData] = useState(null);
-  const [leaderboard, setLeaderboard] = useState([]);
-
-  useEffect(() => {
-    if (!auth.currentUser) return;
-
-    const unsubStats = listenToUserStats(
-      auth.currentUser.uid,
-      (stats) => {
-        setStatsData(stats);
-      }
-    );
-
-    const unsubLeaderboard = subscribeToLeaderboard(setLeaderboard);
-
-    return () => {
-      unsubStats();
-      unsubLeaderboard();
-    };
-  }, []);
-
-  if (!statsData) {
-    return (
-      <div className="text-gray-400">
-        Loading dashboard stats...
-      </div>
-    );
-  }
-
-  const successRate =
-    statsData.totalLabsStarted > 0
-      ? Math.round(
-          (statsData.totalLabsCompleted /
-            statsData.totalLabsStarted) *
-            100
-        )
-      : 0;
-
-  const stats = [
-    {
-      icon: Activity,
-      label: "Labs Started",
-      value: statsData.totalLabsStarted,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-    },
-    {
-      icon: CheckCircle2,
-      label: "Completed",
-      value: statsData.totalLabsCompleted,
-      color: "text-green-500",
-      bgColor: "bg-green-500/10",
-    },
-    {
-      icon: Target,
-      label: "Total Attempts",
-      value: statsData.totalAttempts,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
-    },
-    {
-      icon: TrendingUp,
-      label: "Success Rate",
-      value: `${successRate}%`,
-      color: "text-orange-500",
-      bgColor: "bg-orange-500/10",
-    },
-  ];
-
   return (
     <div className="max-w-7xl">
       <div className="mb-8">
@@ -127,68 +51,6 @@ export function Dashboard({ onLabSelect }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-        {stats.map((stat) => {
-          const Icon = stat.icon;
-          return (
-            <div
-              key={stat.label}
-              className="bg-[#0d1238] border border-gray-800 rounded-xl p-6 hover:border-gray-700 transition-colors"
-            >
-              <div className="flex items-center gap-4">
-                <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                  <Icon className={`size-6 ${stat.color}`} />
-                </div>
-                <div>
-                  <div className="text-2xl font-semibold mb-1">
-                    {stat.value}
-                  </div>
-                  <div className="text-sm text-gray-400">
-                    {stat.label}
-                  </div>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="mb-12">
-        <h2 className="text-xl font-semibold mb-6">🏆 Leaderboard</h2>
-
-        <div className="bg-[#0d1238] border border-gray-800 rounded-xl overflow-hidden">
-          {leaderboard.length === 0 ? (
-            <div className="p-6 text-gray-400">
-              No leaderboard data yet.
-            </div>
-          ) : (
-            leaderboard.map((user) => (
-              <div
-                key={user.id}
-                className="flex items-center justify-between px-6 py-4 border-b border-gray-800 last:border-none"
-              >
-                <div className="flex items-center gap-4">
-                  <span className="text-lg font-semibold text-blue-400">
-                    #{user.rank}
-                  </span>
-                  <div>
-                    <div className="font-medium">
-                      {user.name || user.email}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      Labs Completed
-                    </div>
-                  </div>
-                </div>
-
-                <div className="text-green-400 font-semibold">
-                  {user.stats?.totalLabsCompleted || 0}
-                </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
 
       <div className="mb-12">
         <div className="flex items-center gap-3 mb-4">
