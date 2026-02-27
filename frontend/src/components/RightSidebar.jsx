@@ -11,57 +11,54 @@ import { subscribeToLeaderboard } from "../services/leaderboard.services";
 import { listenToUserStats } from "../services/user.service";
 
 export function RightSidebar() {
-    const [statsData, setStatsData] = useState(null);
+  const [userData, setUserData] = useState(null);
   const [leaderboard, setLeaderboard] = useState([]);
 
   useEffect(() => {
     if (!auth.currentUser) return;
 
-    const unsubStats = listenToUserStats(
+    const unsubUser = listenToUserStats(
       auth.currentUser.uid,
-      (stats) => {
-        setStatsData(stats);
+      (data) => {
+        setUserData(data);
       }
     );
 
     const unsubLeaderboard = subscribeToLeaderboard(setLeaderboard);
-
     return () => {
-      unsubStats();
+      unsubUser();
       unsubLeaderboard();
     };
   }, []);
 
-  if (!statsData) {
+  if (!userData) {
     return (
       <div className="text-gray-400">
         Loading dashboard stats...
       </div>
     );
   }
-
-
-  if (!statsData) return null;
+  const stats = userData.stats || {};
+  const streak = userData.streak || {current: 0};
 
   const successRate =
-    statsData.totalLabsStarted > 0
+    stats.totalLabsStarted > 0
       ? Math.round(
-          (statsData.totalLabsCompleted /
-            statsData.totalLabsStarted) *
+          (stats.totalLabsCompleted /
+            stats.totalLabsStarted) *
             100
         )
       : 0;
 
   const completionProgress =
-    statsData.totalLabsStarted > 0
+    stats.totalLabsStarted > 0
       ? Math.round(
-          (statsData.totalLabsCompleted /
-            statsData.totalLabsStarted) *
+          (stats.totalLabsCompleted /
+            stats.totalLabsStarted) *
             100
         )
       : 0;
 
-  const streak = statsData.currentStreak || 0;
 
   return (
     <aside className={`fixed right-0 top-16 h-[calc(100vh-4rem)] w-70 bg-[#0d1238] border-r p-2 border-gray-800 transition-all duration-300 overflow-y-auto`}>
@@ -100,7 +97,7 @@ export function RightSidebar() {
                 Labs Completed
               </p>
               <p className="text-2xl font-bold">
-                {statsData.totalLabsCompleted}
+                {stats.totalLabsCompleted || 0}
               </p>
             </div>
           </div>
@@ -135,7 +132,7 @@ export function RightSidebar() {
                 Current Streak
               </p>
               <p className="text-2xl font-bold">
-                {streak}
+                {streak.current}
                 <span className="text-base text-gray-500">
                   {" "}days
                 </span>
