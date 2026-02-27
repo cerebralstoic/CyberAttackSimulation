@@ -8,7 +8,7 @@ import { stopLab } from "../services/docker.service.js";
 import { cancelTTL } from "../services/ttl.service.js";
 import { getLab } from "../registry/getLab.js";
 import { scheduleTTL } from "../services/ttl.service.js";
-import { completeLabHistoryEntry, incrementUserStat } from "../services/userStat.service.js";
+import { completeLabHistoryEntry, incrementUserStat, updateUserStreak } from "../services/userStat.service.js";
 import { createLabHistory } from "../services/userStat.service.js";
 
 const LAB_STARTERS = {
@@ -106,7 +106,7 @@ export async function completeLabController(req, res){
     }
 
     await completeLabHistoryEntry(userId, historyId);
-    
+    await updateUserStreak(userId);
     res.json({ success: true});
   }catch(err){
     res.status(500).json({error: err.message});
