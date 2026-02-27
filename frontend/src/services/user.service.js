@@ -16,6 +16,11 @@ export async function createUserIfNotExists(user) {
         totalLabsCompleted: 0,
         totalAttempts: 0,
       },
+      streak: {
+        current: 0,
+        longest: 0,
+        lastCompletedDate: null,
+      },
     });
   } else {
     await updateDoc(ref, {
@@ -60,7 +65,11 @@ export function listenToUserStats(userId, callback) {
 
   return onSnapshot(ref, (snap) => {
     if (snap.exists()) {
-      callback(snap.data().stats);
+      const data = snap.data();
+      callback({
+        stats: data.stats,
+        streak: data.streak || { current: 0, longest: 0 }
+      });
     } else {
       callback(null);
     }

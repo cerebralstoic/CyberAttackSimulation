@@ -56,3 +56,51 @@ export async function completeLabHistoryEntry(userId, historyId) {
     durationSeconds: duration,
   });
 }
+
+export async function updateUserStreak(userId){
+  const ref  = adminDb.collection("users").doc(userId);
+  const snap = await ref.get();
+
+  if(!snap.exists) return;
+
+  const data = snap.data();
+  const streak = data.streak || {
+    current: 0,
+    longest: 0,
+    lastCompletedDate: null
+  };
+  const today = new Date();
+  const todaystr = today.toISOString().split("T")[0];
+  const lastDate = streak.LastCompletedDate;
+
+  if(!lastDate){
+    await ref.update({
+      "streak.current":1,
+      "streak.longest":1,
+      "streak.lastCompletedDate": todaystr
+    });
+    return ;
+  }
+
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate()-1);
+  const yesterdaystr = yesterday.toISOString().split("T")[0];
+
+  if(lastDate === todaystr){
+    return;
+  }
+  if(lastDate === yesterdaystr){
+    const newcurrent = streak.current +1;
+    await ref.update({
+      "streak.current": newcurrent,
+      "streak.longest": Math.max(newcurrent, streak.longest),
+      "streak.lastCompletedDate": todaystr
+    });
+  }else{
+    await ref.update({
+      "streak.current": 1,
+      "streak.lastCompletedDate": todaystr
+    });
+  }
+
+}
